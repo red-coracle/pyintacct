@@ -1,0 +1,3 @@
+jxmlease>=1.0.1
+requests>=2.22, <3.0
+pydantic==0.29.0

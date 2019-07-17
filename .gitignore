@@ -1,0 +1,5 @@
+__pycache__/
+.idea/
+pyintacct.egg-info/
+venv/
+tests/config.py
