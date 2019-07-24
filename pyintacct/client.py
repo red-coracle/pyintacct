@@ -43,7 +43,7 @@ class IntacctAPI(object):
             'ENDPOINT': 'https://api.intacct.com',
             'UNIQUE_ID': 'false',
             'DTD_VERSION': '3.0',
-            'INCLUDE_WHITEPSPACE': 'true'
+            'INCLUDE_WHITESPACE': 'true'
         }
         if config is not None:
             self.config.update(config)
@@ -60,7 +60,7 @@ class IntacctAPI(object):
             'controlid': uuid4(),
             'uniqueid': self.config['UNIQUE_ID'],
             'dtdversion': self.config['DTD_VERSION'],
-            'includewhitespace': self.config['INCLUDE_WHITEPSPACE'],
+            'includewhitespace': self.config['INCLUDE_WHITESPACE'],
         }))
         self.sessionid = None
         self.session_expiration = 0

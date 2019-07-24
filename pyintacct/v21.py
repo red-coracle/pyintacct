@@ -25,5 +25,5 @@ class API21(object):
 
     def create_sotransaction(self, sotransaction: SOTransaction) -> XMLDictNode:
         payload, function = self.parent().get_function_base()
-        function.add_node('create_invoice', new_node=XMLDictNode(sotransaction.dict(skip_defaults=True)))
+        function.add_node('create_sotransaction', new_node=XMLDictNode(sotransaction.dict(skip_defaults=True)))
         return self.parent().execute(payload)

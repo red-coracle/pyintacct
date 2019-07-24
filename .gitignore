@@ -1,5 +1,7 @@
 __pycache__/
 .idea/
+build/
+dist/
 pyintacct.egg-info/
 venv/
 tests/config.py

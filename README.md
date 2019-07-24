@@ -5,6 +5,7 @@ A simple Python SDK for Sage Intacct.
 
 **Requirements**
   - Python >= 3.6
+  - pydantic
   - requests
   - jxmlease
 
