@@ -87,7 +87,7 @@ class IntacctAPI(object):
                                                                        new_node=XMLCDATANode(self.sessionid))
         try:
             payload.standardize()
-            r = self.session.post(self.url, data=payload.emit_xml())
+            r = self.session.post(self.url, data=payload.emit_xml().encode('utf-8'))
             if 500 <= r.status_code <= 599:
                 # If a 500 error is encountered we raise IntacctServerError. The user may decide whether to retry.
                 raise IntacctServerError(r.text)
@@ -171,6 +171,14 @@ class IntacctAPI(object):
         remaining = data.get_xml_attr('numremaining')
         result_id = data.get_xml_attr('resultId', None)
         return data, remaining, result_id
+        
+    def inspect(self, object: str = '*', detail: bool = False, name: str = None):
+        payload, function = self.get_function_base()
+        inspect_node = function.add_node(tag='inspect', new_node=XMLDictNode({
+            f'{"name" if name else "object"}': f'{name if name else object}'}
+        ))
+        inspect_node.set_xml_attr('detail', f'{"1" if detail else "0"}')
+        return self.execute(payload)
 
     def create(self, obj):
         if issubclass(obj.__class__, BaseModel):
