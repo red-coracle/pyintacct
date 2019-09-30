@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 
 NAME = 'pyintacct'
-VERSION = '0.0.5'
+VERSION = '0.0.6'
 DESCRIPTION = 'Python SDK for Intacct'
 LONG_DESCRIPTION = open('README.md').read()
 LICENSE = 'MIT'
