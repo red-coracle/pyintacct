@@ -2,6 +2,7 @@ __pycache__/
 .idea/
 build/
 dist/
+htmlcov/
 pyintacct.egg-info/
 venv/
 tests/config.py
