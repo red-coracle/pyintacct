@@ -4,10 +4,10 @@ import time
 from copy import deepcopy
 from jxmlease import parse, XMLDictNode, XMLCDATANode
 from pydantic import BaseModel
-from typing import List
+from typing import List, Type, Union
 from uuid import uuid4
 from .exceptions import IntacctException, IntacctServerError
-from .v21 import API21
+from .models.base import API21Object
 
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s:%(levelname)s:%(message)s')
@@ -51,7 +51,7 @@ class IntacctAPI(object):
         self.session = requests.session()
         self.session.headers = {'content-type': 'application/xml',
                                 'accept-encoding': '*',
-                                'user-agent': 'pyintacct-0.0.5'}
+                                'user-agent': 'pyintacct-0.0.6'}
         self.url = 'https://api.intacct.com/ia/xml/xmlgw.phtml'
         self.basexml = parse(BASE_XML)
         self.basexml['request']['control'].update(XMLDictNode({
@@ -64,7 +64,6 @@ class IntacctAPI(object):
         }))
         self.sessionid = None
         self.session_expiration = 0
-        self.v21 = API21(parent=self)  # For using 2.1 specific methods.
 
     def execute(self, payload: XMLDictNode, refresh_session=True) -> XMLDictNode:
         """
@@ -142,14 +141,17 @@ class IntacctAPI(object):
         sessionid = next(response.find_nodes_with_tag('sessionid'))
         return str(sessionid.text)
 
-    def read_by_query(self, obj: str, query: str, fields: str = '*', pagesize: int = 100):
-        """TODO: support automatic deserialisation instead of returning jxmlease object"""
+    def read_by_query(self, obj: str, query: str, fields: str = '*', pagesize: int = 100, docparid: str = ''):
+        """TODO: support automatic deserialisation instead of returning jxmlease object
+           TODO: turn into generator instead of all results at once.
+        """
         payload, function = self.get_function_base()
         function.add_node(tag='readByQuery', new_node=XMLDictNode({
             'object': obj,
             'fields': fields,
             'query': query,
-            'pagesize': pagesize}))
+            'pagesize': pagesize,
+            'docparid': docparid}))
         results = list()
         r = self.execute(payload)
         results.extend(r.find_nodes_with_tag(obj.lower()))
@@ -172,27 +174,54 @@ class IntacctAPI(object):
         result_id = data.get_xml_attr('resultId', None)
         return data, remaining, result_id
         
-    def inspect(self, object: str = '*', detail: bool = False, name: str = None):
+    def inspect(self, obj: str = '*', detail: bool = False, name: str = None):
         payload, function = self.get_function_base()
         inspect_node = function.add_node(tag='inspect', new_node=XMLDictNode({
-            f'{"name" if name else "object"}': f'{name if name else object}'}
+            f'{"name" if name else "object"}': f'{name if name else obj}'}
         ))
         inspect_node.set_xml_attr('detail', f'{"1" if detail else "0"}')
         return self.execute(payload)
 
     def create(self, obj):
-        if issubclass(obj.__class__, BaseModel):
+        payload, function = self.get_function_base()
+        tag = 'create'
+        if issubclass(obj.__class__, API21Object):
+            tag = obj.create()
+            new_node = XMLDictNode(obj.dict(skip_defaults=True))
+        elif hasattr(obj, 'dict'):
             obj = dict([(obj.__class__.__name__.upper(), obj.dict())])
-        payload, function = self.get_function_base()
-        function.add_node(tag='create', new_node=XMLDictNode(obj))
+            new_node = XMLDictNode(obj)
+        else:
+            new_node = XMLDictNode(obj)
+        function.add_node(tag=tag, new_node=new_node)
         return self.execute(payload)
 
-    def update(self, obj: dict):
+    def update(self, obj: Union[dict, BaseModel]):
         payload, function = self.get_function_base()
-        function.add_node(tag='update', new_node=XMLDictNode(obj))
+        tag = 'update'
+        if hasattr(obj, 'dict'):
+            obj = dict([(obj.__class__.__name__.upper(), obj.dict())])
+            new_node = XMLDictNode(obj)
+        else:
+            new_node = XMLDictNode(obj)
+        function.add_node(tag=tag, new_node=new_node)
         return self.execute(payload)
 
-    def delete(self, obj: str, keys: List[str]):
+    def _delete_v21(self, obj: type(API21Object), keys: List[str]):
+        function_name, key_attr = obj.delete()
+        for key in keys:
+            payload, function = self.get_function_base()
+            f = function.add_node(function_name)
+            f.set_xml_attr(key_attr, key)
+            self.execute(payload)
+        return
+
+    def delete(self, obj: Union[str, type(API21Object)], keys: List[str]):
+        try:
+            if issubclass(obj, API21Object):
+                return self._delete_v21(obj, keys)
+        except TypeError:
+            pass
         payload, function = self.get_function_base()
         function.add_node(tag='delete', new_node=XMLDictNode({
             'object': obj,

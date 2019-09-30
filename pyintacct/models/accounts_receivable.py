@@ -1,7 +1,5 @@
-import weakref
-from pyintacct.models.base import Date
+from pyintacct.models.base import API21Object, Date
 from decimal import Decimal
-from jxmlease import XMLDictNode
 from pydantic import BaseModel
 from typing import List
 
@@ -25,7 +23,7 @@ class LineItem(BaseModel):
     lineitem: List[LineItemDetail]
 
 
-class ARInvoice(BaseModel):
+class ARInvoice(API21Object):
     customerid: str = ...
     datecreated: Date = ...
     dateposted: Date = None
@@ -39,3 +37,11 @@ class ARInvoice(BaseModel):
     currency: str = None
     exchratetype: str = None
     invoiceitems: LineItem = ...
+
+    @classmethod
+    def create(cls) -> str:
+        return 'create_invoice'
+
+    @classmethod
+    def delete(cls):
+        return 'delete_invoice', 'key'

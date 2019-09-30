@@ -1,7 +1,7 @@
 from unittest import TestCase
 
+from pydantic import BaseModel
 from pyintacct.client import IntacctAPI
-from pyintacct.models.company import Contact
 from tests.config import config
 
 
@@ -21,3 +21,18 @@ class TestEndpoint(TestCase):
         r = self.api.inspect(detail=False, name='Sales Invoice')
         detail = next(r.find_nodes_with_tag('Field'))
         assert 'RECORDNO' in detail
+
+    def test_create_custom_model(self):
+        class Location(BaseModel):
+            LOCATIONID: str
+            NAME: str
+            PARENTID: str
+
+        location = Location(LOCATIONID='T123', NAME='Test Location', PARENTID='100')
+        self.api.create(location)
+        location.NAME = 'Testing Location'
+        self.api.update(location)
+        query = self.api.read_by_query('LOCATION', 'LOCATIONID = \'T123\'')
+        assert len(query) == 1
+        assert query[0]['NAME'] == location.NAME
+        self.api.delete('LOCATION', [query[0]['RECORDNO']])
