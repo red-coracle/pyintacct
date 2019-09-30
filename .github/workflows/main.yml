@@ -1,0 +1,35 @@
+name: Python package
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 1
+      matrix:
+        python-version: [3.6, 3.7]
+
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        fetch-depth: 1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    - name: Test with pytest
+      env:
+        SENDER_ID: ${{ secrets.SENDER_ID }}
+        SENDER_PW: ${{ secrets.SENDER_PW }}
+        USER_ID: ${{ secrets.USER_ID }}
+        USER_PW: ${{ secrets.USER_PW }}
+        COMPANY_ID: ${{ secrets.COMPANY_ID }}
+      run: |
+        pip install pytest
+        pytest
