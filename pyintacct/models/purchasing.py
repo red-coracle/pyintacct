@@ -40,20 +40,20 @@ class POTransactionItems(BaseModel):
 
 
 class POTransaction(API21Object):
-    transactiontype: str = ...
-    datecreated: Date = ...
+    transactiontype: str = None
+    datecreated: Date = None
     dateposted: Date = None
     createdfrom: str = None
-    vendorid: str = ...
+    vendorid: str = None
     documentno: str = None
     referenceno: str = None
     vendordocno: str = None
     termname: str = None
-    datedue: Date = ...
+    datedue: Date = None
     message: str = None
     shippingmethod: str = None
-    returnto: Contact = ...
-    payto: Contact = ...
+    returnto: Contact = None
+    payto: Contact = None
     deliverto: Contact = None
     supdocid: str = None
     externalid: str = None
