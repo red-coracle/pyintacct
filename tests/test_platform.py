@@ -1,38 +1,30 @@
-from unittest import TestCase
-
+from .utils import random_str
 from pydantic import BaseModel
-from pyintacct.client import IntacctAPI
-from tests.config import config
 
 
-class TestEndpoint(TestCase):
-    def setUp(self):
-        self.api = IntacctAPI(config=config)
+def test_inspect(client):
+    r = client.inspect('CONTACT', True)
+    detail = next(r.find_nodes_with_tag('Field'))
+    assert 'externalDataName' in detail
 
-    def tearDown(self) -> None:
-        self.api.session.close()
 
-    def test_inspect(self):
-        r = self.api.inspect('CONTACT', True)
-        detail = next(r.find_nodes_with_tag('Field'))
-        assert 'externalDataName' in detail
+def test_inspect_name(client):
+    r = client.inspect(detail=False, name='Sales Invoice')
+    detail = next(r.find_nodes_with_tag('Field'))
+    assert 'RECORDNO' in detail
 
-    def test_inspect_name(self):
-        r = self.api.inspect(detail=False, name='Sales Invoice')
-        detail = next(r.find_nodes_with_tag('Field'))
-        assert 'RECORDNO' in detail
 
-    def test_create_custom_model(self):
-        class Location(BaseModel):
-            LOCATIONID: str
-            NAME: str
-            PARENTID: str
+def test_create_custom_model(client):
+    class Location(BaseModel):
+        LOCATIONID: str
+        NAME: str
+        PARENTID: str
 
-        location = Location(LOCATIONID='T123', NAME='Test Location', PARENTID='100')
-        self.api.create(location)
-        location.NAME = 'Testing Location'
-        self.api.update(location)
-        query = self.api.read_by_query('LOCATION', 'LOCATIONID = \'T123\'')
-        assert len(query) == 1
-        assert query[0]['NAME'] == location.NAME
-        self.api.delete('LOCATION', [query[0]['RECORDNO']])
+    location = Location(LOCATIONID=random_str(5), NAME='Test Location', PARENTID='100')
+    client.create(location)
+    location.NAME = 'Testing Location'
+    client.update(location)
+    query = client.read_by_query('LOCATION', f'LOCATIONID = \'{location.LOCATIONID}\'')
+    assert len(query) == 1
+    assert query[0]['NAME'] == location.NAME
+    client.delete('LOCATION', [query[0]['RECORDNO']])
