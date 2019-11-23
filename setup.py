@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 
 NAME = 'pyintacct'
-VERSION = '0.0.7'
+VERSION = '0.0.8'
 DESCRIPTION = 'Python SDK for Intacct'
 LONG_DESCRIPTION = open('README.md').read()
 LICENSE = 'MIT'
@@ -39,5 +39,6 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7']
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8']
 )
