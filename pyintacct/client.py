@@ -36,7 +36,7 @@ class IntacctAPI(object):
             'SENDER_ID': None,
             'SENDER_PW': None,
             'COMPANY_ID': None,
-            'ENTITY_ID': None,
+            'ENTITY_ID': '',
             'USER_ID': None,
             'USER_PW': None,
             'SESSION_ID': None,
@@ -135,7 +135,8 @@ class IntacctAPI(object):
         payload['request']['operation']['authentication'].add_node(tag='login', new_node=login)
         function = XMLDictNode(tag='function')
         function.set_xml_attr('controlid', str(uuid4()))
-        function.add_node('getAPISession')
+        session_node = function.add_node('getAPISession')
+        session_node.add_node('locationid', text=self.config['ENTITY_ID'])
         payload['request']['operation']['content'].add_node(tag='function', new_node=function)
         response = self.execute(payload, refresh_session=False)
         sessionid = next(response.find_nodes_with_tag('sessionid'))
@@ -173,7 +174,7 @@ class IntacctAPI(object):
         remaining = data.get_xml_attr('numremaining')
         result_id = data.get_xml_attr('resultId', None)
         return data, remaining, result_id
-        
+
     def inspect(self, obj: str = '*', detail: bool = False, name: str = None):
         payload, function = self.get_function_base()
         inspect_node = function.add_node(tag='inspect', new_node=XMLDictNode({
