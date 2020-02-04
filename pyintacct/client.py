@@ -75,9 +75,10 @@ class IntacctAPI(object):
         """
         if self.session_expiration < time.time() and refresh_session:
             try:
-                self.sessionid = self.get_session_id()
-                # TODO: The expiration can be obtained from the API response now.
-                self.session_expiration = time.time() + 60 * 60
+                sessionid, endpoint, timestamp = self.get_session_id()
+                self.sessionid = sessionid
+                self.url = endpoint
+                self.session_expiration = time.mktime(time.strptime(timestamp, '%Y-%m-%dT%H:%M:%S+00:00'))
             except IntacctException as e:
                 self.sessionid = None
                 self.session_expiration = 0
@@ -140,7 +141,9 @@ class IntacctAPI(object):
         payload['request']['operation']['content'].add_node(tag='function', new_node=function)
         response = self.execute(payload, refresh_session=False)
         sessionid = next(response.find_nodes_with_tag('sessionid'))
-        return str(sessionid.text)
+        endpoint = next(response.find_nodes_with_tag('endpoint'))
+        timestamp = next(response.find_nodes_with_tag('sessiontimeout'))
+        return str(sessionid.text), str(endpoint.text), str(timestamp.text)
 
     def read_by_query(self, obj: str, query: str, fields: str = '*', pagesize: int = 100, docparid: str = ''):
         """TODO: support automatic deserialisation instead of returning jxmlease object
