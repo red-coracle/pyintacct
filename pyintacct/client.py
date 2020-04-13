@@ -4,7 +4,7 @@ import time
 from copy import deepcopy
 from jxmlease import parse, XMLDictNode, XMLCDATANode
 from pydantic import BaseModel
-from typing import List, Type, Union
+from typing import List, Union
 from uuid import uuid4
 from .exceptions import IntacctException, IntacctServerError
 from .models.base import API21Object
@@ -188,7 +188,7 @@ class IntacctAPI(object):
         tag = 'create'
         if issubclass(obj.__class__, API21Object):
             tag = obj.create()
-            new_node = XMLDictNode(obj.dict(skip_defaults=True))
+            new_node = XMLDictNode(obj.dict(exclude_unset=True))
         elif hasattr(obj, 'dict'):
             obj = dict([(obj.__class__.__name__.upper(), obj.dict())])
             new_node = XMLDictNode(obj)
