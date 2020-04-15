@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 
 NAME = 'pyintacct'
-VERSION = '0.0.8'
+VERSION = '0.1.0'
 DESCRIPTION = 'Python SDK for Intacct'
 LONG_DESCRIPTION = open('README.md').read()
 LICENSE = 'MIT'
@@ -12,7 +12,7 @@ URL = 'https://github.com/red-coracle/pyintacct'
 PYTHON_VERSION = '>=3.6.0'
 REQUIRES = ['requests >=2.22, <3.0',
             'jxmlease >= 1.0.1',
-            'pydantic == 0.32.2']
+            'pydantic == 1.4']
 
 
 
