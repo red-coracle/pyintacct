@@ -12,7 +12,7 @@ URL = 'https://github.com/red-coracle/pyintacct'
 PYTHON_VERSION = '>=3.6.0'
 REQUIRES = ['requests >=2.22, <3.0',
             'jxmlease >= 1.0.1',
-            'pydantic == 1.4']
+            'pydantic == 1.6.2']
 
 
 
