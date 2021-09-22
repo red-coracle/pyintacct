@@ -51,7 +51,7 @@ class IntacctAPI(object):
         self.session = requests.session()
         self.session.headers = {'content-type': 'application/xml',
                                 'accept-encoding': '*',
-                                'user-agent': 'pyintacct-0.1.0'}
+                                'user-agent': 'pyintacct-0.1.1'}
         self.url = 'https://api.intacct.com/ia/xml/xmlgw.phtml'
         self.basexml = parse(BASE_XML)
         self.basexml['request']['control'].update(XMLDictNode({
