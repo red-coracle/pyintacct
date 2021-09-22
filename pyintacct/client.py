@@ -4,7 +4,7 @@ import time
 from copy import deepcopy
 from jxmlease import parse, XMLDictNode, XMLCDATANode
 from pydantic import BaseModel
-from typing import List, Union
+from typing import List, Tuple, Union
 from uuid import uuid4
 from .exceptions import IntacctException, IntacctServerError
 from .models.base import API21Object
@@ -126,7 +126,7 @@ class IntacctAPI(object):
         else:
             return True
 
-    def get_session_id(self) -> str:
+    def get_session_id(self) -> Tuple[str, str, str]:
         payload = deepcopy(self.basexml)
         login = XMLDictNode({
             'userid': self.config['USER_ID'],

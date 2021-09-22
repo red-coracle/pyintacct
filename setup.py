@@ -9,10 +9,10 @@ LICENSE = 'MIT'
 AUTHOR = 'red-coracle'
 AUTHOR_EMAIL = ''
 URL = 'https://github.com/red-coracle/pyintacct'
-PYTHON_VERSION = '>=3.6.0'
+PYTHON_VERSION = '>=3.6.1'
 REQUIRES = ['requests >=2.22, <3.0',
-            'jxmlease >= 1.0.1',
-            'pydantic == 1.4']
+            'jxmlease >= 1.0.3',
+            'pydantic >= 1.6.2, <2.0.0']
 
 
 
@@ -40,5 +40,6 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8']
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9']
 )
