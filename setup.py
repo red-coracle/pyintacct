@@ -10,10 +10,12 @@ AUTHOR = 'red-coracle'
 AUTHOR_EMAIL = ''
 URL = 'https://github.com/red-coracle/pyintacct'
 PYTHON_VERSION = '>=3.6.1'
-REQUIRES = ['requests >=2.22, <3.0',
+REQUIRES = ['httpx >=0.20.0, <2.0',
             'jxmlease >= 1.0.3',
             'pydantic >= 1.6.2, <2.0.0']
-
+EXTRAS = {
+    'http2': ['httpx[http2] >=0.20.0, <2.0']
+}
 
 
 setup(
