@@ -54,7 +54,7 @@ class IntacctAPI(object):
         self.headers = {'content-type': 'application/xml',
                         'accept-encoding': '*',
                         'user-agent': 'pyintacct-0.1.1'}
-        self.http_client = httpx.Client(headers=self.headers)
+        self.http_client = httpx.Client(headers=self.headers, timeout=30)
         self.basexml = parse(BASE_XML)
         self.basexml['request']['control'].update(XMLDictNode({
             'senderid': self.sender_id,
@@ -147,6 +147,9 @@ class IntacctAPI(object):
         return str(sessionid.text), str(endpoint.text), str(timestamp.text)
 
     def read_by_query(self, obj: str, query: str, fields: str = '*', pagesize: int = 100, docparid: str = ''):
+        return list(self.yield_by_query(obj, query, fields, pagesize, docparid))
+
+    def yield_by_query(self, obj: str, query: str, fields: str = '*', pagesize: int = 100, docparid: str = ''):
         payload, function = self.get_function_base()
         function.add_node(tag='readByQuery', new_node=XMLDictNode({
             'object': obj,
@@ -154,16 +157,16 @@ class IntacctAPI(object):
             'query': query,
             'pagesize': pagesize,
             'docparid': docparid}))
-        results = list()
         r = self.execute(payload)
-        results.extend(r.find_nodes_with_tag(obj.lower()))
+        for record in r.find_nodes_with_tag(obj.lower()):
+            yield record
         data = next(r.find_nodes_with_tag('data'))
         remaining = data.get_xml_attr('numremaining')
         result_id = data.get_xml_attr('resultId')
         while int(remaining) > 0:
             data, remaining, result_id = self.read_more(result_id)
-            results.extend(data.find_nodes_with_tag(obj.lower()))
-        return results
+            for record in data.find_nodes_with_tag(obj.lower()):
+                yield record
 
     def read_more(self, result_id):
         payload, function = self.get_function_base()

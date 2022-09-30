@@ -37,7 +37,13 @@ client = IntacctAPI(config)
 customer = {'customer': {'CUSTOMERID': 'C-0001', 'NAME': 'Acme, Inc.'}}
 client.create(customer)
 
+# Query and return all results at once
 r = client.read_by_query('CUSTOMER', 'CUSTOMERID = \'C-0001\'', fields='NAME', pagesize=1)
+
+# Or iterate through pages
+r = client.yield_by_query('CUSTOMER', 'CUSTOMERID = \'C-0001\'', fields='NAME', pagesize=1)
+for customer in r:
+    print(customer['NAME'])
 ```
 
 You can also use pydantic models:
