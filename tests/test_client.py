@@ -1,19 +1,20 @@
 from pyintacct.client import IntacctAPI
-from unittest import TestCase
 
 
-class TestClient(TestCase):
-    def test_client(self):
-        api = IntacctAPI()
-        self.assertIsInstance(api, IntacctAPI)
+def test_client():
+    api = IntacctAPI('', '')
+    assert isinstance(api, IntacctAPI)
 
-    def test_client_config(self):
-        api = IntacctAPI()
-        self.assertTrue(all(item in api.config.items() for item in {'SENDER_ID': None, 'SENDER_PW': None}.items()))
 
-    def test_client_config_defaults(self):
-        config = {'SENDER_ID': 'mysender', 'SENDER_PW': 'mysenderpw'}
-        api = IntacctAPI(config=config)
-        self.assertTrue(all(item in api.config.items() for item in {'SENDER_ID': 'mysender', 'SENDER_PW': 'mysenderpw'}.items()))
-        self.assertTrue(all(item in api.config.items() for item in {'USER_ID': None, 'USER_PW': None}.items()))
-        self.assertTrue(api.basexml['request']['control']['senderid'] == 'mysender')
+def test_client_config():
+    api = IntacctAPI('sender_id', 'sender_pass')
+    assert api.sender_id == 'sender_id'
+    assert api.sender_password == 'sender_pass'
+
+
+def test_client_config_defaults():
+    api = IntacctAPI('sender_id', 'sender_pass')
+    assert api.user_id is None
+    assert api.user_password is None
+    assert api.session_expiration == 0
+    assert api.basexml['request']['control']['senderid'] == 'sender_id'

@@ -1,7 +1,9 @@
-from pyintacct.models.base import API21Object, Date
 from decimal import Decimal
-from pydantic import BaseModel
 from typing import List
+
+from pydantic import BaseModel
+
+from pyintacct.models.base import API21Object, Date
 
 
 class LineItemDetail(BaseModel):

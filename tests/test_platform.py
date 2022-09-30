@@ -1,5 +1,6 @@
-from .utils import random_str
 from pydantic import BaseModel
+
+from .utils import random_str
 
 
 def test_inspect(client):
@@ -28,3 +29,15 @@ def test_create_custom_model(client):
     assert len(query) == 1
     assert query[0]['NAME'] == location.NAME
     client.delete('LOCATION', [query[0]['RECORDNO']])
+
+
+def test_parse_models(client):
+    class Location(BaseModel):
+        LOCATIONID: str
+        NAME: str
+        PARENTID: str
+
+    results = client.read_by_query('LOCATION', query='')
+    for result in results:
+        location = Location.parse_obj(result)
+        assert location.NAME != ''

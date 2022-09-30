@@ -1,8 +1,11 @@
-import os
+from pydantic import BaseSettings
 
 
-config = {'SENDER_ID': os.getenv('SENDER_ID'),
-          'SENDER_PW': os.getenv('SENDER_PW'),
-          'USER_ID': os.getenv('USER_ID'),
-          'USER_PW': os.getenv('USER_PW'),
-          'COMPANY_ID': os.getenv('COMPANY_ID')}
+class TestSettings(BaseSettings):
+    SENDER_ID: str
+    SENDER_PASSWORD: str
+    COMPANY_ID: str
+    USER_ID: str
+    USER_PASSWORD: str
+
+config = TestSettings()

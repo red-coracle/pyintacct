@@ -1,14 +1,15 @@
 import logging
-import requests
 import time
 from copy import deepcopy
-from jxmlease import parse, XMLDictNode, XMLCDATANode
-from pydantic import BaseModel
 from typing import List, Tuple, Union
 from uuid import uuid4
+
+import httpx
+from jxmlease import parse, XMLDictNode, XMLCDATANode
+from pydantic import BaseModel
+
 from .exceptions import IntacctException, IntacctServerError
 from .models.base import API21Object
-
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s:%(levelname)s:%(message)s')
 
@@ -31,39 +32,38 @@ BASE_XML = """<?xml version="1.0" encoding="UTF-8"?>
 
 
 class IntacctAPI(object):
-    def __init__(self, config: dict = None):
-        self.config = {
-            'SENDER_ID': None,
-            'SENDER_PW': None,
-            'COMPANY_ID': None,
-            'ENTITY_ID': '',
-            'USER_ID': None,
-            'USER_PW': None,
-            'SESSION_ID': None,
-            'ENDPOINT': 'https://api.intacct.com',
-            'UNIQUE_ID': 'false',
-            'DTD_VERSION': '3.0',
-            'INCLUDE_WHITESPACE': 'true'
-        }
-        if config is not None:
-            self.config.update(config)
-        self.debug_level = logging.DEBUG
-        self.session = requests.session()
-        self.session.headers = {'content-type': 'application/xml',
-                                'accept-encoding': '*',
-                                'user-agent': 'pyintacct-0.1.1'}
-        self.url = 'https://api.intacct.com/ia/xml/xmlgw.phtml'
+    def __init__(self,
+                 sender_id: str = None,
+                 sender_password: str = None,
+                 company_id: str = None,
+                 entity_id: str = None,
+                 user_id: str = None,
+                 user_password: str = None,
+                 session_id: str = None,
+                 session_expiration: int = 0,
+                 endpoint: str = 'https://api.intacct.com/ia/xml/xmlgw.phtml'):
+        self.sender_id = sender_id
+        self.sender_password = sender_password
+        self.company_id = company_id
+        self.entity_id = entity_id
+        self.user_id = user_id
+        self.user_password = user_password
+        self.session_id = session_id
+        self.session_expiration = session_expiration
+        self.endpoint = endpoint
+        self.headers = {'content-type': 'application/xml',
+                        'accept-encoding': '*',
+                        'user-agent': 'pyintacct-0.1.1'}
+        self.http_client = httpx.Client(headers=self.headers)
         self.basexml = parse(BASE_XML)
         self.basexml['request']['control'].update(XMLDictNode({
-            'senderid': self.config['SENDER_ID'],
-            'password': self.config['SENDER_PW'],
+            'senderid': self.sender_id,
+            'password': self.sender_password,
             'controlid': uuid4(),
-            'uniqueid': self.config['UNIQUE_ID'],
-            'dtdversion': self.config['DTD_VERSION'],
-            'includewhitespace': self.config['INCLUDE_WHITESPACE'],
+            'uniqueid': 'false',
+            'dtdversion': '3.0',
+            'includewhitespace': 'true',
         }))
-        self.sessionid = None
-        self.session_expiration = 0
 
     def execute(self, payload: XMLDictNode, refresh_session=True) -> XMLDictNode:
         """
@@ -75,19 +75,18 @@ class IntacctAPI(object):
         """
         if self.session_expiration < time.time() and refresh_session:
             try:
-                sessionid, endpoint, timestamp = self.get_session_id()
-                self.sessionid = sessionid
-                self.url = endpoint
+                self.session_id, self.endpoint, timestamp = self.get_session_id()
                 self.session_expiration = time.mktime(time.strptime(timestamp, '%Y-%m-%dT%H:%M:%S+00:00'))
             except IntacctException as e:
-                self.sessionid = None
+                self.session_id = None
                 self.session_expiration = 0
+                raise e
         if refresh_session:
-            payload['request']['operation']['authentication'].add_node(tag='sessionid',
-                                                                       new_node=XMLCDATANode(self.sessionid))
+            payload['request']['operation']['authentication'] \
+                .add_node(tag='sessionid', new_node=XMLCDATANode(self.session_id))
         try:
             payload.standardize()
-            r = self.session.post(self.url, data=payload.emit_xml().encode('utf-8'))
+            r = self.http_client.post(self.endpoint, content=payload.emit_xml().encode('utf-8'))
             if 500 <= r.status_code <= 599:
                 # If a 500 error is encountered we raise IntacctServerError. The user may decide whether to retry.
                 raise IntacctServerError(r.text)
@@ -96,7 +95,7 @@ class IntacctAPI(object):
                 return response
             else:
                 raise IntacctException('Intacct API call failed.\n' + r.text)
-        except requests.exceptions.RequestException as e:
+        except httpx.HTTPStatusError as e:
             raise IntacctException(e)
 
     def get_function_base(self):
@@ -128,16 +127,18 @@ class IntacctAPI(object):
 
     def get_session_id(self) -> Tuple[str, str, str]:
         payload = deepcopy(self.basexml)
+        # Note: the login elements need to be in this order
         login = XMLDictNode({
-            'userid': self.config['USER_ID'],
-            'companyid': self.config['COMPANY_ID'],
-            'password': self.config['USER_PW']
+            'userid': self.user_id,
+            'companyid': self.company_id,
+            'password': self.user_password
         })
         payload['request']['operation']['authentication'].add_node(tag='login', new_node=login)
         function = XMLDictNode(tag='function')
         function.set_xml_attr('controlid', str(uuid4()))
         session_node = function.add_node('getAPISession')
-        session_node.add_node('locationid', text=self.config['ENTITY_ID'])
+        if self.entity_id is not None:
+            session_node.add_node('locationid', text=self.entity_id)
         payload['request']['operation']['content'].add_node(tag='function', new_node=function)
         response = self.execute(payload, refresh_session=False)
         sessionid = next(response.find_nodes_with_tag('sessionid'))
@@ -146,9 +147,6 @@ class IntacctAPI(object):
         return str(sessionid.text), str(endpoint.text), str(timestamp.text)
 
     def read_by_query(self, obj: str, query: str, fields: str = '*', pagesize: int = 100, docparid: str = ''):
-        """TODO: support automatic deserialisation instead of returning jxmlease object
-           TODO: turn into generator instead of all results at once.
-        """
         payload, function = self.get_function_base()
         function.add_node(tag='readByQuery', new_node=XMLDictNode({
             'object': obj,

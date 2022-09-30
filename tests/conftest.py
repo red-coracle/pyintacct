@@ -9,7 +9,13 @@ from pyintacct.models.purchasing import POTransaction, POTransactionItem, POTran
 
 @pytest.fixture(scope='session')
 def client():
-    return IntacctAPI(config=config)
+    return IntacctAPI(
+        sender_id=config.SENDER_ID,
+        sender_password=config.SENDER_PASSWORD,
+        company_id=config.COMPANY_ID,
+        user_id=config.USER_ID,
+        user_password=config.USER_PASSWORD
+    )
 
 
 @pytest.fixture
