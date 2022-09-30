@@ -147,9 +147,6 @@ class IntacctAPI(object):
         return str(sessionid.text), str(endpoint.text), str(timestamp.text)
 
     def read_by_query(self, obj: str, query: str, fields: str = '*', pagesize: int = 100, docparid: str = ''):
-        return list(self.yield_by_query(obj, query, fields, pagesize, docparid))
-
-    def yield_by_query(self, obj: str, query: str, fields: str = '*', pagesize: int = 100, docparid: str = ''):
         payload, function = self.get_function_base()
         function.add_node(tag='readByQuery', new_node=XMLDictNode({
             'object': obj,
@@ -157,16 +154,16 @@ class IntacctAPI(object):
             'query': query,
             'pagesize': pagesize,
             'docparid': docparid}))
+        results = list()
         r = self.execute(payload)
-        for record in r.find_nodes_with_tag(obj.lower()):
-            yield record
+        results.extend(r.find_nodes_with_tag(obj.lower()))
         data = next(r.find_nodes_with_tag('data'))
         remaining = data.get_xml_attr('numremaining')
         result_id = data.get_xml_attr('resultId')
         while int(remaining) > 0:
             data, remaining, result_id = self.read_more(result_id)
-            for record in data.find_nodes_with_tag(obj.lower()):
-                yield record
+            results.extend(data.find_nodes_with_tag(obj.lower()))
+        return results
 
     def read_more(self, result_id):
         payload, function = self.get_function_base()
