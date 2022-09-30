@@ -54,7 +54,7 @@ class IntacctAPI(object):
         self.headers = {'content-type': 'application/xml',
                         'accept-encoding': '*',
                         'user-agent': 'pyintacct-0.1.1'}
-        self.http_client = httpx.Client(headers=self.headers)
+        self.http_client = httpx.Client(headers=self.headers, timeout=30)
         self.basexml = parse(BASE_XML)
         self.basexml['request']['control'].update(XMLDictNode({
             'senderid': self.sender_id,
