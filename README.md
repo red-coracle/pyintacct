@@ -27,12 +27,13 @@ A simple Python SDK for Sage Intacct.
 ```python
 from pyintacct import IntacctAPI
 
-config = {'SENDER_ID': 'senderid',
-          'SENDER_PW': 'senderpassword',
-          'COMPANY_ID': 'mycompany',
-          'USER_ID': 'username',
-          'USER_PW': 'password'}
-client = IntacctAPI(config)
+client = IntacctAPI(
+    sender_id='senderid',
+    sender_password='senderpassword',
+    company_id='mycompany',
+    user_id='username',
+    user_password='password'
+)
 
 customer = {'customer': {'CUSTOMERID': 'C-0001', 'NAME': 'Acme, Inc.'}}
 client.create(customer)
