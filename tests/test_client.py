@@ -1,8 +1,10 @@
 import types
 
+import pytest
 from jxmlease import XMLDictNode
 from pydantic import BaseModel
 
+from pyintacct import IntacctException
 from pyintacct.client import IntacctAPI
 
 
@@ -25,6 +27,11 @@ def test_client_config_defaults():
     assert api.basexml['request']['control']['senderid'] == 'sender_id'
 
 
+def test_client_entity_level(client):
+    client.entity_id = '100'
+    client.get_session_id()
+
+
 def test_read_by_query(client):
     locations = client.read_by_query('LOCATION', query='', pagesize=100)
     assert all(isinstance(location, XMLDictNode) for location in locations)
@@ -39,10 +46,15 @@ def test_yield_by_query(client):
     results = client.yield_by_query('LOCATION', query='', pagesize=3)
     assert isinstance(results, types.GeneratorType)
     for result in results:
-        location = Location.parse_obj(result)
+        location = Location.model_validate(result)
         assert location.NAME != ''
 
 
 def test_yield_by_query_custom_object(client):
     results = client.yield_by_query('asset', query='')
     assert len(list(results)) == 0
+
+
+def test_invalid_request(client):
+    with pytest.raises(IntacctException):
+        client.read_by_query('FAKEOBJECT', '')

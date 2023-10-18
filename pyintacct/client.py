@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from .exceptions import IntacctException, IntacctServerError
 from .models.base import API21Object
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s:%(levelname)s:%(message)s')
+logging.basicConfig(level=logging.ERROR, format='%(asctime)s:%(levelname)s:%(message)s')
 
 BASE_XML = """<?xml version="1.0" encoding="UTF-8"?>
 <request>
@@ -53,8 +53,15 @@ class IntacctAPI(object):
         self.endpoint = endpoint
         self.headers = {'content-type': 'application/xml',
                         'accept-encoding': '*',
-                        'user-agent': 'pyintacct-0.1.1'}
-        self.http_client = httpx.Client(headers=self.headers, timeout=30)
+                        'user-agent': 'pyintacct-0.2.0'}
+        # Auto-detect http2 is available
+        http2_enabled = False
+        try:
+            import h2
+            http2_enabled = True
+        except ImportError:
+            pass
+        self.http_client = httpx.Client(headers=self.headers, timeout=30, http2=http2_enabled)
         self.basexml = parse(BASE_XML)
         self.basexml['request']['control'].update(XMLDictNode({
             'senderid': self.sender_id,
@@ -71,7 +78,7 @@ class IntacctAPI(object):
 
         :param payload: A jxmlease structure containing the full payload except authentication.
         :param refresh_session: An override flag to allow bypassing session reuse.
-        :return: A requests response.
+        :return: An XMLDictNode.
         """
         if self.session_expiration < time.time() and refresh_session:
             try:
@@ -192,7 +199,10 @@ class IntacctAPI(object):
         tag = 'create'
         if issubclass(obj.__class__, API21Object):
             tag = obj.create()
-            new_node = XMLDictNode(obj.dict(exclude_unset=True))
+            new_node = XMLDictNode(obj.model_dump(exclude_unset=True))
+        elif hasattr(obj, 'model_dump'):
+            obj = dict([(obj.__class__.__name__.upper(), obj.model_dump())])
+            new_node = XMLDictNode(obj)
         elif hasattr(obj, 'dict'):
             obj = dict([(obj.__class__.__name__.upper(), obj.dict())])
             new_node = XMLDictNode(obj)
@@ -204,7 +214,10 @@ class IntacctAPI(object):
     def update(self, obj: Union[dict, BaseModel]):
         payload, function = self.get_function_base()
         tag = 'update'
-        if hasattr(obj, 'dict'):
+        if hasattr(obj, 'model_dump'):
+            obj = dict([(obj.__class__.__name__.upper(), obj.model_dump())])
+            new_node = XMLDictNode(obj)
+        elif hasattr(obj, 'dict'):
             obj = dict([(obj.__class__.__name__.upper(), obj.dict())])
             new_node = XMLDictNode(obj)
         else:
