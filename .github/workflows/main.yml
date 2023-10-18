@@ -31,5 +31,4 @@ jobs:
         USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
         COMPANY_ID: ${{ secrets.COMPANY_ID }}
       run: |
-        pip install pytest
         pytest

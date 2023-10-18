@@ -15,7 +15,7 @@ REQUIRES = ['httpx >=0.23.0, <2.0',
             'pydantic >= 2.0']
 EXTRAS = {
     'http2': ['httpx[http2] >=0.23.0, <2.0'],
-    'dev': ['pydantic-settings >= 2.0.1']
+    'dev': ['pytest', 'pydantic-settings >= 2.0.1']
 }
 
 
@@ -32,6 +32,7 @@ setup(
     packages=find_packages(exclude=["tests", "*.tests", "*.tests.*", "tests.*"]),
     python_requires=PYTHON_VERSION,
     install_requires=REQUIRES,
+    extras_require=EXTRAS,
     # test_suite='tests',
     include_package_data=True,
     classifiers=[
