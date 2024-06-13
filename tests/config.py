@@ -1,4 +1,4 @@
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 
 
 class TestSettings(BaseSettings):
@@ -7,5 +7,6 @@ class TestSettings(BaseSettings):
     COMPANY_ID: str
     USER_ID: str
     USER_PASSWORD: str
+
 
 config = TestSettings()

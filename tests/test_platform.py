@@ -31,6 +31,26 @@ def test_create_custom_model(client):
     client.delete('LOCATION', [query[0]['RECORDNO']])
 
 
+def test_create_dict_func(client):
+    class Location(object):
+        def __init__(self, LOCATIONID, NAME, PARENTID):
+            self.LOCATIONID: str = LOCATIONID
+            self.NAME: str = NAME
+            self.PARENTID: str = PARENTID
+
+        def dict(self):
+            return {'LOCATIONID': self.LOCATIONID, 'NAME': self.NAME, 'PARENTID': self.PARENTID}
+
+    location = Location(LOCATIONID=random_str(5), NAME='Test Location', PARENTID='100')
+    client.create(location)
+    location.NAME = 'Testing Location'
+    client.update(location)
+    query = client.read_by_query('LOCATION', f'LOCATIONID = \'{location.LOCATIONID}\'')
+    assert len(query) == 1
+    assert query[0]['NAME'] == location.NAME
+    client.delete('LOCATION', [query[0]['RECORDNO']])
+
+
 def test_parse_models(client):
     class Location(BaseModel):
         LOCATIONID: str
@@ -39,5 +59,5 @@ def test_parse_models(client):
 
     results = client.read_by_query('LOCATION', query='')
     for result in results:
-        location = Location.parse_obj(result)
+        location = Location.model_validate(result)
         assert location.NAME != ''

@@ -9,7 +9,7 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        python-version: ['3.7', '3.8', '3.9', '3.10']
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
 
     steps:
     - uses: actions/checkout@v3
@@ -22,7 +22,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install -r requirements.txt -e .[dev]
     - name: Test with pytest
       env:
         SENDER_ID: ${{ secrets.SENDER_ID }}
@@ -31,5 +31,4 @@ jobs:
         USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
         COMPANY_ID: ${{ secrets.COMPANY_ID }}
       run: |
-        pip install pytest
         pytest
