@@ -1,7 +1,20 @@
 from .base import API21Object
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, Field
+from typing import Optional, List
 
+class AttachmentDetail(BaseModel):
+    attachmentname: Optional[str] = None
+    attachmenttype: Optional[str] = None
+    attachmentdata: Optional[str] = None
+
+class Attachment(BaseModel):
+    attachment: List[AttachmentDetail] = Field(default_factory=list)
+
+class SupDoc(API21Object):
+    supdocid: Optional[str] = None
+    supdocfoldername: Optional[str] = None
+    supdocdescription: Optional[str] = None
+    attachments: Attachment = Field(default_factory=Attachment)
 
 class MailAddress(BaseModel):
     address1: Optional[str] = None
@@ -13,7 +26,6 @@ class MailAddress(BaseModel):
     isocountrycode: Optional[str] = None
     latitude: Optional[str] = None
     longitude: Optional[str] = None
-
 
 class Contact(API21Object):
     contactname: str = ...
