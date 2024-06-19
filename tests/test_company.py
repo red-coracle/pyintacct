@@ -1,7 +1,6 @@
 import pytest
-from decimal import Decimal
+
 from pyintacct.models.company import Contact, MailAddress, SupDoc, Attachment, AttachmentDetail
-from pyintacct.models.base import Date
 from tests.utils import random_str
 
 
@@ -42,6 +41,7 @@ def test_create_contact_with_mailaddress(client):
     )
     contact = Contact(
         contactname=contact_name,
+        printas=contact_name,
         mailaddress=mail_address
     )
     client.create(contact)

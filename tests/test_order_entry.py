@@ -1,14 +1,13 @@
-import pytest
 from decimal import Decimal
+
 from pyintacct.models.base import Date
-from pyintacct.models.company import Contact
 from pyintacct.models.order_entry import SOTransaction, SOTransactionItem, SOTransactionItems
 
 
-def test_create_sotransaction():
+def test_create_sotransaction(client):
     items = SOTransactionItems(sotransitem=[
-        SOTransactionItem(itemid='1001', quantity=Decimal('5'), unit='each', price=Decimal('100.00')),
-        SOTransactionItem(itemid='1002', quantity=Decimal('3'), unit='each', price=Decimal('200.00'))
+        SOTransactionItem(itemid='1001', quantity=Decimal('5'), unit='Each', locationid='100', price=Decimal('100.00')),
+        SOTransactionItem(itemid='1002', quantity=Decimal('3'), unit='Each', locationid='100', price=Decimal('200.00'))
     ])
 
     transaction = SOTransaction(
@@ -31,9 +30,16 @@ def test_create_sotransaction():
     assert transaction.currency == 'USD'
     assert transaction.exchratetype == 'Intacct Daily Rate'
     assert len(transaction.sotransitems.sotransitem) == 2
+    client.create(transaction)
 
 
 def test_query_transactions(client):
-    transactions = client.read_by_query('SOTRANSACTION', 'CUSTOMERID LIKE CUST%', fields='TRANSACTIONID', pagesize=3)
+    transactions = client.read_by_query(
+        'SODOCUMENT',
+        'CUSTVENDID LIKE \'CUST%\'',
+        fields='*',
+        pagesize=3,
+        docparid='Sales Order'
+    )
     assert isinstance(transactions, list)
     assert len(transactions) > 0
