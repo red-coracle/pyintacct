@@ -8,7 +8,7 @@ import httpx
 from jxmlease import parse, XMLDictNode, XMLCDATANode
 from pydantic import BaseModel
 
-from .exceptions import IntacctException, IntacctServerError
+from .exceptions import IntacctException, IntacctRequestError, RateLimitError, IntacctServerError
 from .models.base import API21Object
 
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s:%(levelname)s:%(message)s')
@@ -98,7 +98,7 @@ class IntacctAPI(object):
                 # If a 500 error is encountered we raise IntacctServerError. The user may decide whether to retry.
                 raise IntacctServerError(r.text)
             response = parse(r.text)
-            if self.validate_response(response):
+            if self.validate_response(r.status_code, response):
                 return response
             else:
                 raise IntacctException('Intacct API call failed.\n' + r.text)
@@ -117,17 +117,23 @@ class IntacctAPI(object):
         return payload, function
 
     @staticmethod
-    def validate_response(xml: XMLDictNode) -> bool:
+    def validate_response(status_code: int, xml: XMLDictNode) -> bool:
         """
 
+        :param status_code: HTTP status code
         :param xml: jxmlease XML tree to validate.
         :return: Returns True if the tree has no error nodes,
                  otherwise raises an IntacctException with the error node contents.
         """
         msg = ''
         for node in xml.find_nodes_with_tag('error'):
+            msg += f'[{node.get("errorno")}]: '
             msg += f'{node.get("description")}{node.get("description2")}\n'
         if msg != '':
+            if 400 <= status_code <= 499:
+                if status_code == httpx.codes.TOO_MANY_REQUESTS:
+                    raise RateLimitError(msg)
+                raise IntacctRequestError(msg)
             raise IntacctException(msg)
         else:
             return True
